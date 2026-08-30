@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlaylistForge — topic in, playlist out</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --ink:#0e1116;          /* deep studio charcoal */
+  --ink-2:#161b22;        /* raised panel */
+  --ink-3:#1f262f;        /* input surface */
+  --line:#2b333e;         /* hairlines */
+  --paper:#ede9e0;        /* warm off-white text */
+  --dim:#8b94a1;          /* secondary text */
+  --signal:#ff4e45;       /* record red — used sparingly */
+  --lamp:#ffb454;         /* desk-lamp amber for progress */
+  --ok:#7ad28f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--ink);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;line-height:1.55;
+  min-height:100vh;
+}
+.mono{font-family:'JetBrains Mono',monospace}
+h1,h2{font-family:'Bricolage Grotesque',sans-serif}
+a{color:var(--lamp)}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:26px 0 0}
+.masthead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;letter-spacing:-.02em}
+.masthead h1 .rec{color:var(--signal)}
+.masthead .tag{color:var(--dim);font-size:.95rem}
+.tape{
+  margin-top:22px;display:flex;border:1px solid var(--line);border-bottom:none;
+  border-radius:10px 10px 0 0;overflow:hidden;
+}
+.tape .stage{
+  flex:1;padding:10px 6px;text-align:center;position:relative;
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--dim);
+  border-right:1px solid var(--line);background:var(--ink-2);
+  transition:background .4s,color .4s;
+}
+.tape .stage:last-child{border-right:none}
+.tape .stage b{display:block;font-weight:600;font-size:.8rem;color:inherit}
+.tape .stage.active{background:var(--lamp);color:var(--ink)}
+.tape .stage.done{color:var(--ok)}
+.tape .stage.active::after{
+  content:"●";position:absolute;top:4px;right:6px;color:var(--signal);
+  animation:blink 1s steps(2) infinite;
+}
+@keyframes blink{50%{opacity:0}}
+.timecode{
+  display:flex;justify-content:space-between;padding:6px 10px;
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--dim);
+  border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;
+  background:var(--ink-2);margin-bottom:34px;
+}
+.card{
+  border:1px solid var(--line);border-radius:12px;background:var(--ink-2);
+  padding:22px;margin-bottom:22px;
+}
+.card h2{font-size:1.15rem;font-weight:600;margin-bottom:4px}
+.card .sub{color:var(--dim);font-size:.9rem;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+label{display:block;font-size:.8rem;color:var(--dim);margin-bottom:6px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.03em}
+input[type=text],input[type=password],select{
+  width:100%;background:var(--ink-3);border:1px solid var(--line);
+  border-radius:8px;color:var(--paper);padding:10px 12px;font-size:.95rem;
+  font-family:'Space Grotesk',sans-serif;
+}
+input:focus,select:focus{outline:2px solid var(--lamp);outline-offset:1px}
+.hint{font-size:.78rem;color:var(--dim);margin-top:6px}
+.hint a{color:var(--lamp)}
+button{font-family:'Space Grotesk',sans-serif;cursor:pointer;border-radius:8px}
+.btn{
+  background:var(--signal);color:#fff;border:none;padding:12px 22px;
+  font-size:1rem;font-weight:600;letter-spacing:.01em;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{background:var(--ink-3);color:var(--dim);cursor:not-allowed}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--paper)}
+.btn.ghost:hover{border-color:var(--lamp);color:var(--lamp)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}
+:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+#log{
+  background:#0a0d11;border:1px solid var(--line);border-radius:8px;
+  padding:14px;font-family:'JetBrains Mono',monospace;font-size:.78rem;
+  color:var(--dim);max-height:220px;overflow-y:auto;white-space:pre-wrap;
+}
+#log .t{color:var(--lamp)}
+#log .err{color:var(--signal)}
+#log .ok{color:var(--ok)}
+#results{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.vid{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--ink-3)}
+.vid img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.vid .body{padding:10px}
+.vid .title{font-size:.85rem;font-weight:500;line-height:1.35}
+.vid .meta{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--dim);margin-top:6px}
+.vid a{color:inherit;text-decoration:none}
+.vid a:hover .title{color:var(--lamp)}
+.biglink{
+  display:inline-block;margin-top:4px;padding:12px 20px;border-radius:8px;
+  background:var(--ok);color:var(--ink);font-weight:600;text-decoration:none;
+}
+footer{color:var(--dim);font-size:.8rem;padding:30px 0 40px;text-align:center}
+.check{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:.9rem}
+.check input{width:16px;height:16px;accent-color:var(--signal)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="masthead">
+      <h1>Playlist<span class="rec">Forge</span></h1>
+      <span class="tag">type a topic → get a real YouTube playlist in your account</span>
+    </div>
+    <div class="tape" id="tape">
+      <div class="stage" data-s="0"><b>SEARCH</b>find videos</div>
+      <div class="stage" data-s="1"><b>FILTER</b>duration · views</div>
+      <div class="stage" data-s="2"><b>RANK</b>pick the mix</div>
+      <div class="stage" data-s="3"><b>AUTHORIZE</b>sign in with Google</div>
+      <div class="stage" data-s="4"><b>SAVE</b>write playlist</div>
+    </div>
+    <div class="timecode mono">
+      <span id="tc-l">REC ● 00:00</span>
+      <span id="tc-r">STANDBY</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" id="setup">
+    <h2>One-time setup</h2>
+    <p class="sub">Your keys stay in this browser (localStorage) and talk straight to Google — no middleman server.</p>
+    <div class="grid2">
+      <div>
+        <label for="apikey">YouTube Data API key</label>
+        <input type="password" id="apikey" placeholder="AIza…">
+        <p class="hint"><a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Enable YouTube Data API v3</a> → Credentials → <b>API key</b>.</p>
+      </div>
+      <div>
+        <label for="clientid">OAuth client ID (type: Web application)</label>
+        <input type="text" id="clientid" placeholder="xxxx.apps.googleusercontent.com">
+        <p class="hint">Credentials → <b>OAuth client ID → Web application</b>; add this page's origin (e.g. <span class="mono">http://localhost:8000</span>) under <i>Authorized JavaScript origins</i>. Add yourself as a <i>test user</i> on the OAuth consent screen.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Forge a playlist</h2>
+    <p class="sub">The site writes search queries from your topic, keeps videos that fit a study session, ranks by view signal, then saves the playlist to your channel.</p>
+    <div class="grid2">
+      <div>
+        <label for="topic">Topic</label>
+        <input type="text" id="topic" placeholder="e.g. organic chemistry, or deep focus study music">
+      </div>
+      <div>
+        <label for="count">Videos (<span id="countv">12</span>)</label>
+        <input type="range" id="count" min="3" max="30" value="12" style="width:100%;accent-color:var(--signal)">
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div>
+        <label for="privacy">Privacy</label>
+        <select id="privacy">
+          <option value="public" selected>Public</option>
+          <option value="unlisted">Unlisted</option>
+          <option value="private">Private</option>
+        </select>
+      </div>
+      <div>
+        <label for="dur">Video length window</label>
+        <select id="dur">
+          <option value="240,7200" selected>4 min – 2 h (study-friendly)</option>
+          <option value="60,1200">1 – 20 min (short explainers)</option>
+          <option value="1800,21600">30 min – 6 h (long courses / mixes)</option>
+          <option value="0,86400">anything</option>
+        </select>
+      </div>
+    </div>
+    <div class="check">
+      <input type="checkbox" id="music" checked>
+      <label for="music" style="margin:0">Mix in focus / lo-fi study tracks alongside topical videos</label>
+    </div>
+    <div class="row">
+      <button class="btn" id="go">Forge playlist</button>
+      <button class="btn ghost" id="reset" title="Forget keys stored in this browser">Clear saved keys</button>
+    </div>
+  </section>
+
+  <section class="card" id="logcard" hidden>
+    <h2>Build log</h2>
+    <div id="log"></div>
+  </section>
+
+  <section class="card" id="donecard" hidden>
+    <h2>Done — playlist saved</h2>
+    <div id="donebox"></div>
+    <div class="row">
+      <button class="btn ghost" id="copylink">Copy video links</button>
+    </div>
+  </section>
+
+  <section class="card" id="resultscard" hidden>
+    <h2>In the mix</h2>
+    <div id="results"></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  Runs entirely in your browser against the official YouTube Data API v3. Quota note: each build ≈ 1,000 units of your free 10,000/day.
+</footer>
+<script>
+"use strict";
+/* ---------- state & tiny helpers ---------- */
+const $ = id => document.getElementById(id);
+const API = "https://www.googleapis.com/youtube/v3";
+let PICKS = [];   // final video list for the current build
+
+$("apikey").value = localStorage.getItem("pf_apikey") || "";
+$("clientid").value = localStorage.getItem("pf_clientid") || "";
+$("count").addEventListener("input", e => $("countv").textContent = e.target.value);
+$("reset").addEventListener("click", () => {
+  localStorage.removeItem("pf_apikey");
+  localStorage.removeItem("pf_clientid");
+  $("apikey").value = ""; $("clientid").value = "";
+  log("Saved keys cleared from this browser.");
+});
+
+function log(msg, cls) {
+  $("logcard").hidden = false;
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  const t = new Date().toTimeString().slice(0, 8);
+  line.innerHTML = '<span class="t">[' + t + ']</span> ' + msg;
+  $("log").appendChild(line);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+function stage(n, state) { // state: "active"|"done"
+  const el = document.querySelector('.stage[data-s="' + n + '"]');
+  el.classList.remove("active", "done");
+  if (state) el.classList.add(state);
+  $("tc-r").textContent = state === "done" ? "STAGE " + (n + 1) + " OK"
+    : state === "active" ? "STAGE " + (n + 1) + " RUNNING" : "STANDBY";
+}
+function resetStages() {
+  document.querySelectorAll(".stage").forEach(s => s.classList.remove("active", "done"));
+}
+async function gapi(path, params, key) {
+  const url = API + path + "?" + new URLSearchParams({...params, key});
+  const r = await fetch(url);
+  const j = await r.json();
+  if (!r.ok) {
+    const reason = j?.error?.errors?.[0]?.reason || "";
+    throw new Error(reason + ": " + (j?.error?.message || r.status));
+  }
+  return j;
+}
+function isoDur(d) {
+  const m = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d || "");
+  if (!m) return 0;
+  const [h, mi, s] = m.slice(1).map(x => +(x || 0));
+  return h * 3600 + mi * 60 + s;
+}
+function fmtDur(sec) {
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h ? `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`
+           : `${m}:${String(s).padStart(2,"0")}`;
+}
+function fmtViews(v) {
+  return v >= 1e6 ? (v/1e6).toFixed(1) + "M" : v >= 1e3 ? (v/1e3).toFixed(0) + "K" : "" + v;
+}
+
+/* ---------- query plan: the "AI" is the strategy here ---------- */
+function buildQueries(topic, wantMusic) {
+  const T = topic.trim();
+  const topical = [
+    `${T} full course`,
+    `${T} explained`,
+    `${T} tutorial for beginners`,
+    `${T} crash course`,
+    `best ${T} lectures`,
+  ];
+  const music = ["deep focus study music", "lofi study beats", "ambient study focus music"];
+  return wantMusic ? [...topical, ...music] : topical;
+}
+
+/* ---------- stages 0–2: search, filter, rank ---------- */
+async function findPicks() {
+  const topic = $("topic").value.trim();
+  const [minS, maxS] = $("dur").value.split(",").map(Number);
+  const count = +$("count").value;
+  const queries = buildQueries(topic, $("music").checked);
+  const key = $("apikey").value.trim();
+  log("Query plan: " + queries.map(q => "“" + q + "”").join(" · "));
+
+  // stage 0 — search
+  stage(0, "active");
+  const per = 8;
+  const seen = new Set(), candidates = [];
+  for (const q of queries) {
+    const j = await gapi("/search", {part:"snippet", type:"video", maxResults:per, q}, key);
+    for (const it of j.items || []) {
+      const vid = it.id?.videoId;
+      if (!vid || seen.has(vid)) continue;
+      seen.add(vid);
+      candidates.push({ videoId: vid, title: it.snippet.title,
+        channel: it.snippet.channelTitle, query: q, isMusic: /music|beats|lofi/i.test(q) });
+    }
+  }
+  log(`Found ${candidates.length} unique candidates.`, "ok");
+  stage(0, "done");
+
+  // stage 1 — real duration + views
+  stage(1, "active");
+  for (let i = 0; i < candidates.length; i += 50) {
+    const ids = candidates.slice(i, i + 50).map(c => c.videoId).join(",");
+    const j = await gapi("/videos", {part:"contentDetails,statistics", id: ids}, key);
+    const by = new Map((j.items||[]).map(it => [it.id, it]));
+    for (const c of candidates.slice(i, i + 50)) {
+      const it = by.get(c.videoId);
+      c.dur = it ? isoDur(it.contentDetails?.duration) : 0;
+      c.views = +(it?.statistics?.viewCount || 0);
+    }
+  }
+  const usable = candidates.filter(c =>
+    c.dur >= minS && c.dur <= maxS && !/\bshorts\b|live/i.test(c.title));
+  log(`Kept ${usable.length} within the ${fmtDur(minS)}–${fmtDur(maxS)} window.`);
+  stage(1, "done");
+
+  // stage 2 — rank: best by views per query, round-robin so sources vary
+  stage(2, "active");
+  const byQuery = {};
+  for (const c of usable) (byQuery[c.query] ||= []).push(c);
+  for (const q in byQuery) byQuery[q].sort((a,b) => b.views - a.views);
+  const pools = Object.values(byQuery), picked = [], used = new Set();
+  const musicTarget = $("music").checked ? Math.max(1, Math.floor(count / 4)) : 0;
+  while (picked.length < count) {
+    let addedThisPass = false;
+    for (const pool of pools) {
+      if (picked.length >= count) break;
+      const next = pool.find(c => !used.has(c.videoId) &&
+        !(c.isMusic && picked.filter(p => p.isMusic).length >= musicTarget));
+      if (next) { used.add(next.videoId); picked.push(next); addedThisPass = true; }
+    }
+    if (!addedThisPass) {
+      // top up from leftovers ignoring the music cap
+      const left = usable.find(c => !used.has(c.videoId));
+      if (!left) break;
+      used.add(left.videoId); picked.push(left);
+    }
+  }
+  log("Final mix: " + picked.map(p => p.videoId).join(", "), "ok");
+  stage(2, "done");
+  return { picked, topic, count, privacy: $("privacy").value };
+}
+/* ---------- stages 3–4: authorize + save ---------- */
+let tokenClient = null;
+function authorize(clientId) {
+  return new Promise((resolve, reject) => {
+    if (!window.google?.accounts?.oauth2) {
+      return reject(new Error("Google Identity Services script not loaded — check your connection."));
+    }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: "https://www.googleapis.com/auth/youtube.force-ssl",
+      callback: resp => resp.access_token
+        ? resolve(resp.access_token)
+        : reject(new Error(resp.error || "Authorization failed")),
+      error_callback: e => reject(new Error(e.type || "popup_closed")),
+    });
+    tokenClient.requestAccessToken();
+  });
+}
+async function ytPost(path, token, body) {
+  const r = await fetch(API + path, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const j = await r.json();
+  if (!r.ok) {
+    const reason = j?.error?.errors?.[0]?.reason || "";
+    throw Object.assign(new Error(reason + ": " + (j?.error?.message || r.status)),
+      { reason });
+  }
+  return j;
+}
+
+/* ---------- orchestrator ---------- */
+$("go").addEventListener("click", async () => {
+  const key = $("apikey").value.trim();
+  const clientId = $("clientid").value.trim();
+  if (!key) return alert("Add your YouTube Data API key first (setup card above).");
+  if (!clientId) return alert("Add your OAuth client ID first (setup card above).");
+  localStorage.setItem("pf_apikey", key);
+  localStorage.setItem("pf_clientid", clientId);
+
+  $("go").disabled = true; $("go").textContent = "Forging…";
+  resetStages();
+  $("log").innerHTML = "";
+  $("donecard").hidden = true; $("resultscard").hidden = true; PICKS = [];
+  try {
+    const { picked, topic, privacy } = await findPicks();
+    if (!picked.length) throw new Error("No videos matched that topic + length window. Try a broader topic or wider length window.");
+    PICKS = picked;
+
+    stage(3, "active");
+    log("Opening Google sign-in… approve access to manage your YouTube playlists.");
+    const token = await authorize(clientId);
+    stage(3, "done");
+
+    stage(4, "active");
+    const pl = await ytPost("/playlists", token, {
+      snippet: {
+        title: topic.charAt(0).toUpperCase() + topic.slice(1) + " — forged mix",
+        description: `Custom playlist built with PlaylistForge on ${new Date().toLocaleDateString()} from the topic “${topic}”.`,
+      },
+      status: { privacyStatus: privacy },
+    });
+    let added = 0, skipped = 0;
+    for (const c of picked) {
+      try {
+        await ytPost("/playlistItems", token, {
+          snippet: { playlistId: pl.id,
+            resourceId: { kind: "youtube#video", videoId: c.videoId } },
+        });
+        added++;
+      } catch (e) { skipped++; log(`Skipped ${c.videoId} (${e.reason || "error"})`, "err"); }
+    }
+    stage(4, "done");
+    const url = "https://www.youtube.com/playlist?list=" + pl.id;
+    $("donebox").innerHTML =
+      `<p>${added} video${added === 1 ? "" : "s"} saved${skipped ? `, ${skipped} skipped` : ""}. ` +
+      `Privacy: <b>${privacy}</b>.</p>` +
+      `<p style="margin-top:12px"><a class="biglink" href="${url}" target="_blank" rel="noopener">Open your playlist ↗</a></p>`;
+    $("donecard").hidden = false;
+    log(`Playlist created: ${url}`, "ok");
+  } catch (e) {
+    log("Failed: " + e.message, "err");
+    const hints = {
+      quotaExceeded: "Daily API quota is used up. Resets at midnight Pacific time.",
+      keyInvalid: "That API key is invalid, or YouTube Data API v3 isn't enabled on its project.",
+      access_denied: "Add your Google account as a test user on the OAuth consent screen, then retry.",
+      popup_closed: "Sign-in popup was closed — try again.",
+      forbidden: "Your Google account may not have access to this OAuth app. Check the consent-screen test users.",
+    };
+    const k = Object.keys(hints).find(k => e.message.includes(k));
+    if (k) log("Hint: " + hints[k]);
+  } finally {
+    $("go").disabled = false; $("go").textContent = "Forge playlist";
+  }
+});
+
+/* ---------- results grid + copy fallback ---------- */
+function renderResults() {
+  if (!PICKS.length) return;
+  $("resultscard").hidden = false;
+  $("results").innerHTML = PICKS.map(c =>
+    `<div class="vid">
+       <a href="https://www.youtube.com/watch?v=${c.videoId}" target="_blank" rel="noopener">
+         <img loading="lazy" src="https://i.ytimg.com/vi/${c.videoId}/mqdefault.jpg" alt="">
+         <div class="body">
+           <div class="title">${c.title.replace(/</g, "&lt;")}</div>
+           <div class="meta">${c.channel.replace(/</g, "&lt;")} · ${fmtDur(c.dur)} · ${fmtViews(c.views)} views</div>
+         </div>
+       </a>
+     </div>`).join("");
+}
+$("copylink").addEventListener("click", async () => {
+  const text = PICKS.map(c => `${c.title} — https://www.youtube.com/watch?v=${c.videoId}`).join("\n");
+  try { await navigator.clipboard.writeText(text); $("copylink").textContent = "Copied ✓"; }
+  catch { $("copylink").textContent = "Select & copy manually"; }
+  setTimeout(() => $("copylink").textContent = "Copy video links", 2000);
+});
+/* keep results visible after save */
+new MutationObserver(() => { if ($("donecard") && !$("donecard").hidden) renderResults(); })
+  .observe($("donecard"), { attributes: true });
+</script>
+
+</script>
+
+</body>
+</html>
+
