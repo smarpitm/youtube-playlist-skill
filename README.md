@@ -7,9 +7,9 @@ Turn a topic into a **real YouTube playlist saved to your own channel**
   (Cline, Claude Code, any harness that reads `SKILL.md`). Zero-dependency
   Python 3.8+ CLI: the agent generates search queries, curates the picks from
   real durations/views, then OAuths in and saves the playlist.
-- **`website/index.html`** — a single-file site that does the whole flow in the
+- **`docs/index.html`** — a single-file site that does the whole flow in the
   browser: type a topic → auto query plan → filter/rank → sign in with Google →
-  playlist created. No server, no build step.
+  playlist created. No server, no build step. **Live: https://smarpitm.github.io/youtube-playlist-skill/**
 
 ## Install (skill)
 
@@ -26,8 +26,12 @@ Then just ask your agent: *"make me a study playlist on organic chemistry,
 
 ## Run (website)
 
+Already live: **https://smarpitm.github.io/youtube-playlist-skill/**
+
+Or locally:
+
 ```
-cd website
+cd docs
 python -m http.server 8000
 # open http://localhost:8000
 ```
@@ -39,7 +43,7 @@ python -m http.server 8000
    application (origin `http://localhost:8000`) for the website
 3. Add your Google account as a **test user** on the OAuth consent screen
 
-Full walkthrough: `SKILL.md` and `website/README.md`.
+Full walkthrough: `SKILL.md` and `docs/README.md`.
 
 ## Quota
 

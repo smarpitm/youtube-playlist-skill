@@ -87,8 +87,9 @@ python scripts/yt_playlist.py create --api-key KEY --client-secret client_secret
 
 ## Website path
 
-If the user prefers a no-terminal experience, point them at `website/index.html` in this
-skill (or the standalone copy in the generator repo). Serve it over http (not file://),
+If the user prefers a no-terminal experience, point them at `docs/index.html` in this
+skill (or the standalone copy in the generator repo), live at
+https://smarpitm.github.io/youtube-playlist-skill/. Serve locally over http (not file://),
 e.g. `python -m http.server 8000`, open http://localhost:8000, paste their API key +
 Web-type client ID, type a topic, click Build. The site handles search → filter → rank →
 OAuth (Google Identity Services) → playlist creation entirely in the browser.

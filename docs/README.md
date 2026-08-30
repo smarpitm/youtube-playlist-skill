@@ -30,6 +30,10 @@ everything runs in your browser against the official YouTube Data API v3.
 3. Type a topic, pick a count / length window / privacy, hit **Forge playlist**,
    sign in with Google, and your playlist appears in your YouTube library.
 
+> **Using the hosted version?** Also add `https://smarpitm.github.io` as an
+> *Authorized JavaScript origin* on your OAuth client (you can keep
+> `http://localhost:8000` too).
+
 ## How the curation works
 
 - Your topic is expanded into a query plan (topic + "full course", "explained",
