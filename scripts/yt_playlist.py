@@ -71,8 +71,12 @@ def api_get(path, key, **params):
     return _request("GET", API + path, params=params)
 
 
-def api_post(path, token, body):
-    return _request("POST", API + path, body=body,
+def api_post(path, token, body, part=None):
+    # The insert methods (playlists.insert, playlistItems.insert) require an
+    # explicit `part` query parameter. Without it Google rejects the request with
+    # "unexpectedPart" / "missingRequiredParameter".
+    params = {"part": part} if part else None
+    return _request("POST", API + path, params=params, body=body,
                     headers={"Authorization": "Bearer " + token})
 
 
@@ -237,14 +241,14 @@ def create_playlist(key, client_id, client_secret, title, description,
     pl = api_post("/playlists", token, {
         "snippet": {"title": title, "description": description},
         "status": {"privacyStatus": privacy},
-    })
+    }, part="snippet,status")
     pid = pl["id"]
     added, failed = 0, []
     for vid in video_ids:
         try:
             api_post("/playlistItems", token, {
                 "snippet": {"playlistId": pid, "resourceId": {
-                    "kind": "youtube#video", "videoId": vid}}})
+                    "kind": "youtube#video", "videoId": vid}}}, part="snippet")
             added += 1
         except SystemExit:
             sys.stderr.write("Skipping %s (not found / private)\n" % vid)
