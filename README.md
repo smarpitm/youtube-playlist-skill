@@ -43,7 +43,7 @@ python -m http.server 8000
    application (origin `http://localhost:8000`) for the website
 3. Add your Google account as a **test user** on the OAuth consent screen
 
-Full walkthrough: `SKILL.md` and `docs/README.md`.
+Full walkthrough: [`SETUP_GUIDE.md`](SETUP_GUIDE.md), `SKILL.md` and `docs/README.md`.
 
 ## Quota
 
